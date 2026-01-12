@@ -1,28 +1,71 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/shopping-test
-    username: root
-    password: 1234
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      maximum-pool-size: 1000
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
   jpa:
     hibernate:
-      #create = 테이블을 만들기만
-      #update = 테이블 없으면 만들고 있지만 entity랑 다르면 수정 -> 삭제는 안해줌
-      #validate = 테이블이랑 entity랑 맞는지 확인만
-      #none = 아무것도 안함
-      #create-drop = create랑 똑같은데 애플리케이션 종료시점에 테이블을 drop함 => 테스트코드에서만 쓰세요
       ddl-auto: create-drop
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
-        jdbc:
-          time_zone: Asia/Seoul
+        dialect: org.hibernate.dialect.H2Dialect
         show_sql: false
     show-sql: false
+    open-in-view: false
   data:
     redis:
-      host: ${redis.host:localhost}
-      port: ${redis.port:6379}
+      cluster:
+        nodes: ${redis.host:localhost:6379}
+  h2:
+    console:
+      enabled: true
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+      credentials:
+        access-key: test
+        secret-key: test
+      s3:
+        endpoint: http://localhost:4566
+        path-style-access-enabled: true
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:test}
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.7
+    vectorstore:
+      qdrant:
+        host: localhost
+        port: 6334
+        collection-name: product_recommendations_test
+        initialize-schema: false
+  mail:
+    host: localhost
+    port: 3025
+    username: test@example.com
+    password: test
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+s3:
+  bucket: kt-techup-shopping-test-media
+
+jwt:
+  secret: ${kt.jwt.secret:kt-cloud-tech-up-shopping-202511171107}
+  access-token-expiration: ${kt.jwt.access-token-expiration:300000}
+  refresh-token-expiration: ${kt.jwt.refresh-token-expiration:43200000}
+
+app:
+  mail:
+    from: ${MAIL_FROM:${MAIL_USERNAME:test@example.com}}
+    expiration-seconds: ${MAIL_EXPIRATION_SECONDS:300}
+    verified-expiration-seconds: ${MAIL_VERIFIED_EXPIRATION_SECONDS:1800}

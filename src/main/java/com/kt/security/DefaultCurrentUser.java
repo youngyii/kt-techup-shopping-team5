@@ -3,6 +3,7 @@ package com.kt.security;
 import java.util.Collection;
 import java.util.List;
 
+import com.kt.domain.user.Role;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -14,9 +15,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DefaultCurrentUser implements UserDetails, CurrentUser {
-	//jwt파싱해서 넣어주면 될 것 같음
+
 	private Long id;
 	private String loginId;
+    private Role role;
 
 	@Override
 	public Long getId() {
@@ -30,7 +32,9 @@ public class DefaultCurrentUser implements UserDetails, CurrentUser {
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return List.of();
+        {
+            return List.of(() -> role.getAuthority());
+        }
 	}
 
 	@Override

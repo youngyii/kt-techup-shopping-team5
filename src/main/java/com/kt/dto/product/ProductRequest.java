@@ -1,7 +1,10 @@
 package com.kt.dto.product;
 
+import java.util.List;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,6 +24,7 @@ public class ProductRequest {
 		private Long price;
 		@NotNull
 		private Long quantity;
+		private String description;
 	}
 
 	@Getter
@@ -33,5 +37,24 @@ public class ProductRequest {
 		private Long price;
 		@NotNull
 		private Long quantity;
+		private String description;
+	}
+
+	@Getter
+	@AllArgsConstructor
+	@Schema(name = "ProductRequest.Ids")
+	public static class Ids {
+		@NotNull
+		@NotEmpty
+		private List<Long> productIds;
+	}
+
+	@Getter
+	@AllArgsConstructor
+	@Schema(name = "ProductRequest.Recommend")
+	public static class Recommend {
+		@NotNull
+		@NotEmpty
+		String question;
 	}
 }

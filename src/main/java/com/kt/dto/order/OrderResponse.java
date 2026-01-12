@@ -1,26 +1,94 @@
 package com.kt.dto.order;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import com.kt.domain.order.Order;
 import com.kt.domain.order.OrderStatus;
 import com.querydsl.core.annotations.QueryProjection;
 
 public interface OrderResponse {
-	// 3가지의 방법으로 querydsl결과를 dto에 매핑할 수 있습니다.
-	// 1. 클래스 프로젝션 (Search라는 클래스가 Q클래스로 만들어지면 new로)
-	// 2. 어노테이션 프로젝션 (@QueryProjection)
-	// 3. 그냥 POJO로 직접 매핑
 	record Search(
-		Long id,
-		String receiverName,
-		String productName,
-		Long quantity,
-		Long totalPrice,
-		OrderStatus status,
-		LocalDateTime createdAt
+			Long id,
+			String receiverName,
+			String username,
+			String productName,
+			Long quantity,
+			Long totalPrice,
+			OrderStatus status,
+			LocalDateTime createdAt
 	) {
 		@QueryProjection
 		public Search {
 		}
+	}
+
+	record Item(
+			Long productId,
+			String productName,
+			Long price,
+			Long quantity,
+			Long lineTotal
+	) {
+	}
+
+	// user 상세조회용
+	record Detail(
+			Long id,
+			String receiverName,
+			String receiverMobile,
+			String zipcode,
+			String receiverAddress,
+			String detailAddress,
+			String deliveryRequest,
+			List<Item> items,
+			Long totalPrice,
+			Long usedPoints,
+			OrderStatus status,
+			LocalDateTime createdAt
+	) {
+	}
+
+	// user 목록용
+	record Summary(
+			Long orderId,
+			Long totalPrice,
+			LocalDateTime createdAt,
+			OrderStatus status,
+			String firstProductName,
+			int productCount
+	) {
+	}
+
+	// admin 상세 조회용
+	record AdminDetail(
+			Long id,
+			String receiverName,
+			String receiverMobile,
+			String zipcode,
+			String receiverAddress,
+			String detailAddress,
+			String deliveryRequest,
+			List<Item> items,
+			Long totalPrice,
+			Long usedPoints,
+			OrderStatus status,
+			LocalDateTime createdAt,
+			Long userId,
+			String username
+	) {
+	}
+
+	// admin 목록용
+	record AdminSummary(
+			Long orderId,
+			Long totalPrice,
+			LocalDateTime createdAt,
+			OrderStatus status,
+			String firstProductName,
+			int productCount,
+			Long userId,
+			String username
+	) {
 	}
 }

@@ -47,4 +47,30 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### macOS ###
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Local configurations
+src/main/resources/application-loacal.yml
+resources/application-loacal.yml
+application-local.yml
+
+# AWS Elastic Beanstalk local / platform configs (optional)
+.ebextensions/
+
+# Elasticsearch data directory
+/elasticsearch/
+
+# Qdrant
+/qdrant/
+
+# Localstack
+
+/localstack/

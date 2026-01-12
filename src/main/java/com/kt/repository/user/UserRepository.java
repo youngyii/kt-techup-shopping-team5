@@ -1,39 +1,90 @@
 package com.kt.repository.user;
 
 import java.util.Optional;
+import java.util.Collection;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import com.kt.common.CustomException;
-import com.kt.common.ErrorCode;
+import com.kt.common.exception.CustomException;
+import com.kt.common.exception.ErrorCode;
+import com.kt.domain.user.Role;
 import com.kt.domain.user.User;
 
 import jakarta.validation.constraints.NotNull;
 
-// <T, ID>
-// T: Entity 클래스 => User
-// ID: Entity 클래스의 PK 타입 => Long
 public interface UserRepository extends JpaRepository<User, Long> {
-	//여기에 쿼리를 작성해줘야
-	// JPA에서는 쿼리를 작성하는 3가지 방법이 존재
-	// 1. 네이티브 쿼리 작성 (3)
-	// 2. JPQL 작성 -> 네이티브 쿼리랑 같은데 Entity 기반 (2) - 너무길어진 메소드이름을 그냥 쿼리작성해서 숨김
-	// 3. querymethod 작성 -> 메서드 이름을 쿼리 처럼 작성 (1) - 길어지면 상당히 이상해보임
-	// 찾는다 : findByXX , 존재하냐? existsByXX, 삭제 : deleteByXX
 
-	Boolean existsByLoginId(String loginId);
+    interface AuthInfo {
+        Role getRole();
+
+        String getLoginId();
+    }
+
+	Boolean existsByEmail(String email);
+
+    Optional<User> findByIdAndDeletedAtIsNull(Long id);
 
 	Optional<User> findByLoginId(String loginId);
 
-	@Query("""
-	SELECT exists (SELECT u FROM User u WHERE u.loginId = ?1)
-""")
-	Boolean existsByLoginIdJPQL(String loginId);
+	Optional<User> findByNameAndEmail(String name, String email);
 
-	Page<User> findAllByNameContaining(String name, Pageable pageable);
+	default User findByNameAndEmailOrThrow(String name, String email) {
+		return findByNameAndEmail(name, email)
+				.orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+	}
+
+	@Query("""
+			SELECT exists (SELECT u FROM User u WHERE u.loginId = ?1)
+		""")
+	Boolean existsByLoginId(String loginId);
+
+    Page<User> findAllByRole(Role role, Pageable pageable);
+
+	Page<User> findByRoleIn(Collection<Role> roles, Pageable pageable);
+
+	Page<User> findByNameContaining(String name, Pageable pageable);
+
+	Page<User> findByRoleInAndNameContaining(Collection<Role> roles, String name, Pageable pageable);
+
+	@Query(
+			value = """
+					SELECT * FROM users u
+					WHERE u.role IN (:roles)
+					  AND u.deleted = true
+					  AND (:name IS NULL OR u.name LIKE %:name%)
+					ORDER BY u.created_at DESC
+					""",
+			countQuery = """
+					SELECT count(*) FROM users u
+					WHERE u.role IN (:roles)
+					  AND u.deleted = true
+					  AND (:name IS NULL OR u.name LIKE %:name%)
+					""",
+			nativeQuery = true
+	)
+	Page<User> findDeletedUsersDesc(@Param("roles") Collection<Role> roles, @Param("name") String name, Pageable pageable);
+
+	@Query(
+			value = """
+					SELECT * FROM users u
+					WHERE u.role IN (:roles)
+					  AND u.deleted = true
+					  AND (:name IS NULL OR u.name LIKE %:name%)
+					ORDER BY u.created_at ASC
+					""",
+			countQuery = """
+					SELECT count(*) FROM users u
+					WHERE u.role IN (:roles)
+					  AND u.deleted = true
+					  AND (:name IS NULL OR u.name LIKE %:name%)
+					""",
+			nativeQuery = true
+	)
+	Page<User> findDeletedUsersAsc(@Param("roles") Collection<Role> roles, @Param("name") String name, Pageable pageable);
 
 	@Query(value = """
 			SELECT DISTINCT u FROM User u
@@ -43,10 +94,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	@NotNull
 	Optional<User> findById(@NotNull Long id);
 
-	// @EntityGraph(attributePaths = "orders")
-	// @NotNull Optional<User> findById(@NotNull Long id);
+	default User findByIdOrThrow(Long id) {
+		return findById(id).orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+	}
 
-	default User findByIdOrThrow(Long id, ErrorCode errorCode) {
-		return findById(id).orElseThrow(() -> new CustomException(errorCode));
+	@Query(value = "SELECT * FROM users WHERE id = :id", nativeQuery = true)
+	Optional<User> findByIdIncludeDeleted(@Param("id") Long id);
+
+    @Query("SELECT u.role AS role, u.loginId AS loginId FROM User u WHERE u.id = :id")
+    Optional<AuthInfo> findAuthInfoById(@Param("id") Long id);
+
+	default User findByIdIncludeDeletedOrThrow(Long id) {
+		return findByIdIncludeDeleted(id).orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 	}
 }

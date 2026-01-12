@@ -1,22 +1,46 @@
 package com.kt.repository.order;
 
-import java.util.List;
+import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.kt.common.exception.CustomException;
+import com.kt.common.exception.ErrorCode;
 import com.kt.domain.order.Order;
 
+import com.kt.domain.order.OrderStatus;
 import jakarta.validation.constraints.NotNull;
 
-public interface OrderRepository extends JpaRepository<Order, Long> {
-	// 1. 네이티브쿼리로 작성
-	// 2. jqpl로 작성
-	// 3. 쿼리메소드로 어찌저찌 작성
-	// 4. 조회할때는 동적쿼리를 작성하게해줄 수 있는 querydsl 사용하자
-
-	// String[] attributePaths() default {}
+public interface OrderRepository extends JpaRepository<Order, Long>, OrderRepositoryCustom {
+	// 주문 목록 조회 (페이징)
 	@NotNull
 	@EntityGraph(attributePaths = {"orderProducts", "orderProducts.product"})
-	List<Order> findAllByUserId(Long userId);
+	Page<Order> findAllByUserId(Long userId, Pageable pageable);
+
+	/**
+	 * 지정된 주문 상태(OrderStatus)에 해당하는 주문 목록을 페이징하여 조회합니다.
+	 *
+	 * @param status   조회할 주문 상태
+	 * @param pageable 페이징 정보 (페이지 번호, 페이지 크기, 정렬 등)
+	 * @return 페이징 처리된 주문(Order) 목록
+	 */
+	@EntityGraph(attributePaths = {"orderProducts", "orderProducts.product", "user"})
+	Page<Order> findAllByStatus(OrderStatus status, Pageable pageable);
+
+	// 주문 상세 조회
+	@EntityGraph(attributePaths = {"orderProducts", "orderProducts.product", "user"})
+	Optional<Order> findByIdAndUserId(Long id, Long userId);
+
+    default Order findByIdAndUserIdOrThrow(Long id, Long userId) {
+        return findByIdAndUserId(id, userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ORDER));
+    }
+
+    default Order findByOrderIdOrThrow(Long id) {
+        return findById(id)
+            .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ORDER));
+    }
 }
